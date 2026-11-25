@@ -1,86 +1,55 @@
-README – Mini-projeto Power BI: Dashboard com KPIs
 
-Contexto do Projeto
+# 📊 Dashboard de Performance Comercial — Caramelo Pet
 
-Você foi contratado pelo Augusto, gerente de vendas da empresa Caramelo Pet, que está com o seguinte problema:
-Dados de vendas espalhados em vários arquivos Excel.
+Projeto de Business Intelligence desenvolvido no **Power BI** com foco em modelagem dimensional, tratamento de dados via ETL e visualização executiva para tomada de decisão.
 
-Arquivos separados por:
-•	País, 
-•	Cidade,
-•	Produtos,
-•	Categorias e subcategorias,
-•	Vendedores;
-•	Venda;
+![Preview do Dashboard](./Dashboard_Caramelo_Pet.png)
+*(Dica: suba um print do painel com esse nome na raiz do repositório para a imagem aparecer aqui)*
 
-Objetivo
-Construir um relatório em Power BI que:
-•	Integre todas essas fontes;
-•	Tenha modelo de dados limpo;
-•	Traga KPIs de vendas, lucro e participação de mercado;
-•	Traga análises de tempo;
-•	Gere insights e recomendações estratégicas .
+---
 
-1. Preparação e Carregamento dos Dados
-1.1 Verificar requisitos antes de começar
-•	Ter Power BI Desktop atualizado;
-•	Ter todos os arquivos de vendas e dimensões salvos localmente;
-•	Conferir estrutura de pastas: Pasta de Dimensões (ex.: Dimensões)
-•	Pasta de Vendas (ex.: Vendas) 
+## 🎯 O Problema de Negócio
+As bases de dados da operação estavam fragmentadas em planilhas isoladas (vendas, produtos, categorias, geografia e representantes comerciais) com chaves inconsistentes que impediam o cruzamento direto das informações. 
 
-1.2 Criar tabelas dimensões e fatos no Power Query
-Garantir que:
-•	Cada tabela de dimensão tenha uma chave primária única (ProdutoID, CidadeID etc.);
-•	Tipos de dados corretos (texto, número, data);
-•	Colunas estejam padronizadas (nomes e tipos);
-•	Adicionar colunas auxiliares se achar necessário (ano, mês etc.) 
+O objetivo do projeto foi consolidar essas fontes em um modelo único para responder rapidamente a três perguntas centrais:
+1. Qual é o volume real de faturamento líquido e lucro bruto da operação?
+2. Qual é a margem real de rentabilidade por país e cidade?
+3. Quais linhas de produtos e subcategorias puxam o resultado financeiro?
 
-2. Medidas e Indicadores Úteis
+---
 
-Vendas, Custo, Lucro e Market Share (use se achar necessário)
-Medidas básicas:
-• Receita Total = SUM(fact_Vendas[ValorVenda] ou [receita])
-• CustoTotal =SUM(fact_Vendas[Custo])
-• LucroBruto=[Receita Total]– [Custo Total]
-• MargemBruta%=DIVIDE([LucroBruto], [Receita Total], 0)
-• VendasporVendedor =SUM(fact_Vendas[ValorVenda])agrupado por Sales Rep.
-• Rankingdevendedores (TOP N) por receita.
-• Tabelacomvendas, margememarketshare por vendedor, se fizer sentido.
-• YTD(Year-to-Date)– Receita_YTD
-• Receita_YTD =TOTALYTD([Receita Total], dim_Calendario[Data])
-• YTDLY(Year-to-Date do ano anterior)
-• Receita_YTD_LY = CALCULATE([Receita_YTD], SAMEPERIODLASTYEAR(dim_Calendario[Data]))
-• MTD(Month-to-Date)– Receita_MTD
-• Receita_MTD =TOTALMTD([Receita Total], dim_Calendario[Data])
-• MAT(Last12Months /Rolling 12)– Receita_MAT
-• Receita_MAT =CALCULATE( [Receita Total], DATESINPERIOD(dim_Calendario[Data], MAX(dim_Calendario[Data]),-12, MONTH) )
+## 🛠️ O que foi feito na prática (Arquitetura e Desenvolvimento)
 
-3. Sugestão de Insights a Extrair
+### 1. ETL e Limpeza de Dados (Power Query / Linguagem M)
+* **Padronização de Chaves:** Remoção de caracteres sujos e espaços extras em códigos de produtos (`ProdutoID`), chaves de categoria (`CategoriaKey`) e localização geográfica (`País;Cidade`).
+* **Desnormalização Controlada:** Unificação das tabelas auxiliares de *Categorias* e *Subcategorias* diretamente na dimensão `Produto`, eliminando tabelas soltas e simplificando o modelo.
+* **Dimensão Calendário Dinâmica:** Criação via script M da tabela `dim_Calendario` baseada nas datas mínima e máxima da base de vendas, com ordenação cronológica correta dos meses.
 
-Identificar:
-•	Países com maior/menor market share;
-•	Cidades com lucro baixo ou margem apertada;
-•	Vendedores com performance acima/abaixo da média;
-•	Meses com picos e vales de receita (sazonalidade).
+### 2. Modelagem Dimensional (Star Schema)
+* Estruturação em **Esquema Estrela**, mantendo a tabela fato `Vendas` no centro e conectada por relacionamentos de cardinalidade `1:*` (um para muitos) às dimensões `Produto`, `Geografia`, `RepresentanteVendas` e `dim_Calendario`.
+* Garantia de integridade nos filtros e melhor performance no processamento das consultas.
 
-Recomendações estratégicas:
-•	Regiões onde vale reforçar equipe ou marketing;
-•	Produtos ou categorias com maior potencial de crescimento;
-•	Ajustes na carteira de clientes/vendedores;
-•	Registrar as recomendações em uma página dedicada ou em um resumo textual 
+### 3. Inteligência de Negócio e Métricas (DAX)
+Criação de medidas explícitas para análise financeira e comparativa:
+* **Receita Total:** Cálculo de faturamento líquido considerando unidades vendidas, preço de varejo e descontos aplicados (`SUMX` + `RELATED`).
+* **Custo Total & Lucro Bruto:** Apuração direta dos custos padrão e resultado operacional.
+* **Margem Bruta %:** Indicador de rentabilidade real sobre a receita líquida (`DIVIDE`).
+* **Market Share %:** Participação percentual de cada país sobre o faturamento global (`CALCULATE` + `ALL`).
+* **Inteligência Temporal:** Acompanhamento acumulado no ano (`TOTALYTD`) e comparação com o mesmo período do ano anterior (`SAMEPERIODLASTYEAR`).
 
-4. Entrega e Apresentação
+### 4. UI/UX e Storytelling com Dados
+* Prototipação prévia do layout priorizando hierarquia visual, leitura rápida de KPIs no topo e identidade visual aplicada à marca (*Caramelo Pet*).
+* Inclusão de bloco de **Insights Executivos** diretamente no painel para destacar concentração de mix de produtos, sazonalidade e alavancas de margem.
 
-Entregar um relatório dashboard em arquivo .pbix, com pelo menos:
-•	2 tabelas;
-•	3 métricas calculadas;
-•	2 indicadores;
-•	4 gráficos (de tipos diferentes)
-•	1 resumo textual dos insights obtidos respondendo para Augusto sobre o negócio 
-Obs.: Use quantas páginas achar necessário.
+---
 
+## 📁 Estrutura do Repositório
 
-Contato do Professor
-Rodrigo Garcia Brunini 
-Cientista de Dados | Desenvolvedor de Projetos Professor | Tutor na EBAC 
-LinkedIn: https://www.linkedin.com/in/rgbrunini
+* `pratique_powerbi.pbix` — Arquivo completo do Power BI (ETL, Modelo Estrela, Medidas DAX e Relatório).
+* `Dashboard_Caramelo_Pet.pdf` — Versão exportada em alta resolução para visualização rápida sem necessidade do Power BI Desktop.
+
+---
+
+## 🚀 Como visualizar o projeto
+1. **Visualização rápida:** Abra o arquivo `Dashboard_Caramelo_Pet.pdf` diretamente aqui no GitHub.
+2. **Exploração interativa:** Baixe o arquivo `pratique_powerbi.pbix` e abra no **Power BI Desktop** (gratuito) para navegar pelos filtros, inspecionar o código M no Power Query e testar as medidas DAX.
